@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_USE_CASE_LABELS, SUPPORTED_USE_CASES } from '@/lib/ai/constants';
@@ -148,7 +148,34 @@ export function QuestionnaireManager() {
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function loadQuestionnaires(nextSelectedId?: string | null) {
+  const loadQuestionnaireDetail = useCallback(async (id: string) => {
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`/api/admin/questionnaires/${id}`);
+      const payload = (await response.json()) as {
+        questionnaire?: AdminQuestionnaireDetail;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.questionnaire) {
+        throw new Error(payload.error || 'Failed to load questionnaire detail.');
+      }
+
+      setSelectedId(id);
+      setSelectedMeta(payload.questionnaire);
+      setEditorState(mapDetailToEditorState(payload.questionnaire));
+      setPreview(null);
+      setValidation(null);
+      setFieldErrors({});
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to load questionnaire detail.',
+      );
+    }
+  }, []);
+
+  const loadQuestionnaires = useCallback(async (nextSelectedId?: string | null) => {
     setIsLoading(true);
     setErrorMessage('');
 
@@ -180,38 +207,11 @@ export function QuestionnaireManager() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  async function loadQuestionnaireDetail(id: string) {
-    setErrorMessage('');
-
-    try {
-      const response = await fetch(`/api/admin/questionnaires/${id}`);
-      const payload = (await response.json()) as {
-        questionnaire?: AdminQuestionnaireDetail;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.questionnaire) {
-        throw new Error(payload.error || 'Failed to load questionnaire detail.');
-      }
-
-      setSelectedId(id);
-      setSelectedMeta(payload.questionnaire);
-      setEditorState(mapDetailToEditorState(payload.questionnaire));
-      setPreview(null);
-      setValidation(null);
-      setFieldErrors({});
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load questionnaire detail.',
-      );
-    }
-  }
+  }, [loadQuestionnaireDetail, selectedId]);
 
   useEffect(() => {
     void loadQuestionnaires();
-  }, []);
+  }, [loadQuestionnaires]);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

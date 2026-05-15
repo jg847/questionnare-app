@@ -21,12 +21,10 @@ import type {
   AdminQuestionnaireDetail,
   AdminQuestionnaireInput,
   AdminQuestionnaireListItem,
-  AdminQuestionnaireValidationResult,
   PublicQuestionnaire,
   QuestionnaireSubmissionResponse,
 } from '@/types/admin';
 import type {
-  QuestionnaireAnswerRecord,
   QuestionnaireBranchRecord,
   QuestionnaireOptionRecord,
   QuestionnaireQuestionRecord,
